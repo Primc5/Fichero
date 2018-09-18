@@ -16,7 +16,7 @@ import com.mysql.cj.jdbc.result.ResultSetMetaData;
 
 public class Leer {
     
-    public static void muestraContenido(String archivo) throws FileNotFoundException, IOException {
+    public void muestraContenido(String archivo) throws FileNotFoundException, IOException {
         String cadena;
         FileReader f = new FileReader(archivo);
         BufferedReader b = new BufferedReader(f);
@@ -32,7 +32,7 @@ public class Leer {
         b.close();
     }
     
-    public static void escribi(String pako[]) 
+    public void escribi(String pako[]) 
     		  throws IOException {
     		    
     		    BufferedWriter writer = new BufferedWriter(new FileWriter("src/wea", true));
@@ -44,12 +44,10 @@ public class Leer {
     		    writer.close();
     		}
     
-    private static Scanner sc = new Scanner(System.in);
-    private static String nombre;
-    private static String clase;
-    private static String lvl;
+    private Scanner sc = new Scanner(System.in);
+
     
-    public static String[] escribir() throws IOException{
+    public String[] escribir() throws IOException{
         System.out.println(" ");
         String pako [] = new String[3];
         System.out.print("nombre=");
@@ -64,7 +62,7 @@ public class Leer {
     }
     
     
-    public static String[][] leerbase() throws SQLException{
+    public String[][] leerbase() throws SQLException{
     	ResultSetMetaData rsmd = (ResultSetMetaData) rset.getMetaData();
 		int columnsNumber = rsmd.getColumnCount();                     
 
@@ -86,7 +84,7 @@ public class Leer {
 		return arry;
     }
     
-    public static void escribirBd(String pako[]) throws SQLException{
+    public void escribirBd(String pako[]) throws SQLException{
 
 		
 		PreparedStatement stmt = conexion.prepareStatement("INSERT INTO `jugadores`(`nombre`, `clase`, `lvl`) VALUES (?,?,?)");
@@ -98,7 +96,7 @@ public class Leer {
 		stmt.executeUpdate();
     }
     
-    public static void imprimir (String[][] strings){
+    public void imprimir (String[][] strings){
     	
     	for(int i = 0; i < strings.length; i++){
     		for(int k = 0; k < strings[1].length - 1; k++){
@@ -109,7 +107,7 @@ public class Leer {
     	
     }
     
-    public static void perderlocal(String[][] strings) throws IOException{
+    public void perderlocal(String[][] strings) throws IOException{
     	 BufferedWriter writer = new BufferedWriter(new FileWriter("src/wea"));
     	for(int i = 0; i < strings.length; i++){
 		   
@@ -126,12 +124,12 @@ public class Leer {
     	
     }
     
-    public static void destruir() throws SQLException{
+    public void destruir() throws SQLException{
     	PreparedStatement stmt = conexion.prepareStatement("DELETE FROM jugadores WHERE 'true'='true'");
     	stmt.executeUpdate();
     }
     
-    public static void perderbd(String archivo) throws SQLException, IOException{
+    public void perderbd(String archivo) throws SQLException, IOException{
     	
         String cadena;
         FileReader f = new FileReader(archivo);
@@ -164,10 +162,16 @@ public class Leer {
 
     }
     
-    private static Connection conexion;
-    private static ResultSet rset;
-    public static void main(String[] args) throws IOException, SQLException {
+    private Connection conexion;
+    private ResultSet rset;
+    public static void main(String[] args) throws IOException, SQLException{
     	
+    	Leer leer = new Leer();
+    	leer.coneccion();
+		
+    }
+    
+    public void coneccion() throws IOException, SQLException{
 		
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
@@ -192,16 +196,19 @@ public class Leer {
 			System.out.println("Otros errores");
 			e.printStackTrace();
 		}
-
-	
-    	
-    	
+		esc();
+    }
+    
+    public void esc() throws IOException, SQLException{
+    	int ever = 0;
+    	while(ever == 0){
     	System.out.println("1.Leer");
     	System.out.println("2.Escribir");
     	System.out.println("3.Leer Base de Datos");
     	System.out.println("4.Escribir Base de Datos");
     	System.out.println("5.Sobreescribir archivos locales (Borrara el local)");
     	System.out.println("6.Sobreescribir base de datos (Borra la base de datos)");
+    	System.out.println("7.Salir");
     	int num = Integer.parseInt(sc.nextLine());
     	if(num == 1){
     		muestraContenido("src/wea");
@@ -222,9 +229,13 @@ public class Leer {
     		destruir();
     		perderbd("src/wea");
     	}
+    	else if(num == 7){
+    		ever++;	
+    	}
     	else{
     		System.out.println("Numero incorrecto bro");
     	}
-		
+    	}
     }
+    
 }
