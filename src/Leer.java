@@ -201,7 +201,10 @@ public class Leer {
     
     public void esc() throws IOException, SQLException{
     	int ever = 0;
+    	
     	while(ever == 0){
+    		System.out.println("Pulsa para continuar");
+        	sc.nextLine();
     	System.out.println("1.Leer");
     	System.out.println("2.Escribir");
     	System.out.println("3.Leer Base de Datos");
