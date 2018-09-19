@@ -1,15 +1,19 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 import java.util.Scanner;
 
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
@@ -32,10 +36,9 @@ public class Leer {
         b.close();
     }
     
-    public void escribi(String pako[]) 
-    		  throws IOException {
+    public void escribi(String pako[]) throws IOException {
     		    
-    		    BufferedWriter writer = new BufferedWriter(new FileWriter("src/wea", true));
+    		    BufferedWriter writer = new BufferedWriter(new FileWriter(fichero, true));
     		    
     		    writer.append("\n" + "nombre=" + pako[0] + "\n");
     		    writer.append("clase=" + pako[1] + "\n");
@@ -108,10 +111,10 @@ public class Leer {
     }
     
     public void perderlocal(String[][] strings) throws IOException{
-    	 BufferedWriter writer = new BufferedWriter(new FileWriter("src/wea"));
+    	 BufferedWriter writer = new BufferedWriter(new FileWriter(fichero));
     	for(int i = 0; i < strings.length; i++){
 		   
-
+ 
 		    writer.append("nombre=" + strings[0][i] + "\n");
 		    writer.append("clase=" + strings[1][i] + "\n");
 		    writer.append("lvl=" + strings[2][i]);
@@ -134,17 +137,17 @@ public class Leer {
         String cadena;
         FileReader f = new FileReader(archivo);
         BufferedReader b = new BufferedReader(f);
-        int puta = 0;
+        int contadore = 0;
         PreparedStatement stmt = null;
         while((cadena = b.readLine())!=(null)) {
         	
         	String pick [] = cadena.split("=");
-        	if(puta == 0){
+        	if(contadore == 0){
         		stmt = conexion.prepareStatement("INSERT INTO `jugadores`(`nombre`, `clase`, `lvl`) VALUES (?,?,?)");
         		System.out.println(pick[1]);
         		stmt.setString(1,pick[1]);
         	}
-        	else if(puta == 1){
+        	else if(contadore == 1){
         		System.out.println(pick[1]);
         		stmt.setString(2,pick[1]);
         	}
@@ -152,39 +155,66 @@ public class Leer {
         		System.out.println(pick[1]);
         		stmt.setString(3,pick[1]);
         		stmt.executeUpdate();
-        		puta = -1;
+        		contadore = -1;
         	}
-        	puta++;
+        	contadore++;
         }
         b.close();
-    	
-    	
 
     }
     
     private Connection conexion;
     private ResultSet rset;
     public static void main(String[] args) throws IOException, SQLException{
-    	
     	Leer leer = new Leer();
     	leer.coneccion();
 		
     }
-    
+    private String fichero = "";
     public void coneccion() throws IOException, SQLException{
-		
+		String base = "";
+		String usuario = "";
+		String pass = "";
+
 		try {
+			Properties propiedades = new Properties();
+			InputStream entrada = null;
+			try {
+				File miFichero = new File("src/inicio");
+				if (miFichero.exists()) {
+					entrada = new FileInputStream(miFichero);
+					// cargamos el archivo de propiedades
+					propiedades.load(entrada);
+					// obtenemos las propiedades y las imprimimos
+					
+					base = (propiedades.getProperty("url"));
+					usuario =(propiedades.getProperty("user"));
+					pass = (propiedades.getProperty("pass"));
+					fichero = (propiedades.getProperty("fichero"));
+				} else
+					System.err.println("Fichero no encontrado");
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			} finally {
+				if (entrada != null) {
+					try {
+						entrada.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			String url = "jdbc:mysql://localhost/jaimet2?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
-			conexion = DriverManager.getConnection(url, "root", "");
+			String url = base;
+			conexion = DriverManager.getConnection(url, usuario, pass);
 			if (conexion != null)
 				System.out.println("Conexión establecida");
 			Statement stmt = conexion.createStatement();
 			rset = stmt.executeQuery("Select * from jugadores");
 			ResultSetMetaData rsmd = (ResultSetMetaData) rset.getMetaData();
 
-			int columnsNumber = rsmd.getColumnCount();
-//			conexion.close();
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -201,8 +231,9 @@ public class Leer {
     
     public void esc() throws IOException, SQLException{
     	int ever = 0;
-    	
+    	int pako = 0;
     	while(ever == 0){
+    		pako = 0;
     		System.out.println("Pulsa para continuar");
         	sc.nextLine();
     	System.out.println("1.Leer");
@@ -213,8 +244,9 @@ public class Leer {
     	System.out.println("6.Sobreescribir base de datos (Borra la base de datos)");
     	System.out.println("7.Salir");
     	int num = Integer.parseInt(sc.nextLine());
+    	String confi = "";
     	if(num == 1){
-    		muestraContenido("src/wea");
+    		muestraContenido(fichero);
     	}
     	else if(num == 2){
     		escribi(escribir());
@@ -226,14 +258,42 @@ public class Leer {
     		escribirBd(escribir());
     	}
     	else if(num == 5){
-    		perderlocal(leerbase());
+    		System.out.println("Esta seguro? Y/N");
+    		while(pako == 0){
+    		confi = sc.nextLine();
+    		if(confi.equals("Y")){
+    			perderlocal(leerbase());
+    			pako++;
+    		}
+    		else if(confi.equals("N")){
+    			pako++;
+    		}
+    		else{
+    			System.out.println("Orden no valida");
+    		}
+    		}
+    		
     	}
     	else if(num == 6){
-    		destruir();
-    		perderbd("src/wea");
+    		System.out.println("Esta seguro? Y/N");
+    		while(pako == 0){
+    		confi = sc.nextLine();
+    		if(confi.equals("Y")){	
+        		destruir();
+        		perderbd(fichero);
+        		pako++;
+    		}
+    		else if(confi.equals("N")){
+    			pako++;
+    		}
+    		else{
+    			System.out.println("Orden no valida");
+    		}
+    		}
     	}
     	else if(num == 7){
     		ever++;	
+    		System.out.println("Pase un buen dia ^^");
     	}
     	else{
     		System.out.println("Numero incorrecto bro");
